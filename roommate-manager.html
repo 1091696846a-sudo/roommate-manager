@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>合租生活管家</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f2f3f5; color: #1f2329; font-size: 15px; line-height: 1.55;
+    padding-bottom: calc(66px + env(safe-area-inset-bottom));
+  }
+  h1, h2, h3, p, ul { margin: 0; }
+  ul { list-style: none; padding: 0; }
+  button { font-family: inherit; }
+
+  header {
+    position: sticky; top: 0; z-index: 30;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 12px 16px;
+    background: rgba(255,255,255,.94);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid #e5e6eb;
+  }
+  header .title { font-size: 17px; font-weight: 700; }
+  header .sub { font-size: 12px; color: #8a919f; }
+
+  main { max-width: 640px; margin: 0 auto; padding: 12px; }
+
+  .card {
+    background: #fff; border-radius: 12px; padding: 14px; margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.05);
+  }
+  .card h3 { font-size: 15px; margin-bottom: 10px; }
+
+  .muted { color: #8a919f; }
+  .small { font-size: 12px; }
+
+  .row { margin-bottom: 10px; }
+  .input {
+    width: 100%; border: 1px solid #dcdfe6; border-radius: 9px;
+    padding: 10px 12px; font-size: 15px; background: #fff; color: inherit;
+    font-family: inherit; outline: none;
+  }
+  .input:focus { border-color: #2563eb; }
+  textarea.input { resize: vertical; min-height: 64px; }
+
+  .btn {
+    border: none; border-radius: 9px; padding: 10px 16px; font-size: 15px;
+    background: #2563eb; color: #fff; cursor: pointer;
+  }
+  .btn:active { opacity: .85; }
+  .btn.block { display: block; width: 100%; }
+  .btn.ghost { background: #eef2ff; color: #2563eb; }
+  .btn.ghost-danger { background: #fef2f2; color: #dc2626; }
+  .link { border: none; background: none; color: #2563eb; font-size: 13px; cursor: pointer; padding: 2px 4px; }
+  .link.danger { color: #dc2626; }
+
+  .list li {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid #f0f1f3;
+  }
+  .list li:last-child { border-bottom: none; }
+  .list .right { text-align: right; }
+  .actions { display: flex; gap: 6px; justify-content: flex-end; margin-top: 2px; }
+
+  .chks { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chk {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #f5f6f8; border-radius: 8px; padding: 6px 10px; font-size: 14px; cursor: pointer;
+  }
+  .label { font-size: 13px; color: #8a919f; margin-bottom: 6px; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    border-radius: 999px; padding: 3px 10px; font-size: 12px;
+    background: #f0f1f3; color: #5c6370; cursor: pointer; border: none;
+  }
+  .chip.on { background: #dbeafe; color: #1d4ed8; }
+
+  .tag { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 999px; background: #f0f1f3; color: #5c6370; }
+  .tag.green { background: #dcfce7; color: #15803d; }
+  .tag.orange { background: #ffedd5; color: #c2410c; }
+  .tag.red { background: #fee2e2; color: #b91c1c; }
+
+  nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
+    display: flex;
+    background: rgba(255,255,255,.97);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid #e5e6eb;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  nav button {
+    flex: 1; border: none; background: none; cursor: pointer;
+    padding: 7px 0 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 1px;
+    font-size: 11px; color: #8a919f;
+  }
+  nav button .icon { font-size: 19px; line-height: 1.1; }
+  nav button.active { color: #2563eb; }
+
+  .overlay {
+    position: fixed; inset: 0; z-index: 50;
+    background: rgba(15,23,42,.35);
+    display: flex; align-items: flex-end;
+  }
+  .sheet {
+    width: 100%; max-height: 88vh; overflow-y: auto;
+    background: #f2f3f5;
+    border-radius: 16px 16px 0 0;
+    padding: 16px 16px calc(20px + env(safe-area-inset-bottom));
+    animation: up .2s ease;
+  }
+  @keyframes up { from { transform: translateY(24px); opacity: .6; } to { transform: none; opacity: 1; } }
+
+  .progress { height: 6px; border-radius: 999px; background: #eceef1; overflow: hidden; }
+  .progress i { display: block; height: 100%; background: #2563eb; border-radius: 999px; transition: width .25s; }
+
+  .empty { text-align: center; padding: 24px 8px; color: #8a919f; font-size: 14px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function () {
+  'use strict';
+
+  var STORE_KEY = 'roommate_manager_v1';
+
+  var TABS = [
+    { id: 'home', label: '概览', icon: '🏠' },
+    { id: 'expense', label: '费用', icon: '💰' },
+    { id: 'chore', label: '值日', icon: '🧹' },
+    { id: 'supply', label: '物品', icon: '🧻' },
+    { id: 'clause', label: '公约', icon: '📜' }
+  ];
+
+  var CATEGORIES = ['作息与噪音', '访客与过夜', '清洁标准', '费用规则', '公共物品使用', '其他'];
+
+  function defaultState() {
+    return {
+      household: '我的合租屋',
+      members: [],
+      expenses: [],
+      chores: [],
+      assignments: [],
+      supplies: [],
+      clauses: [],
+      tab: 'home'
+    };
+  }
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (!raw) return defaultState();
+      var parsed = JSON.parse(raw);
+      var base = defaultState();
+      Object.keys(parsed || {}).forEach(function (k) {
+        if (parsed[k] !== undefined) base[k] = parsed[k];
+      });
+      return base;
+    } catch (err) {
+      return defaultState();
+    }
+  }
+
+  var state = load();
+  var showSettings = false;
+
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+    catch (err) { console.warn('保存失败', err); }
+  }
+
+  function uid() {
+    return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+  }
+
+  function esc(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function fmtDate(d) {
+    return d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+  }
+
+  function weekKey(offset) {
+    offset = offset || 0;
+    var d = new Date();
+    var day = d.getDay() || 7;
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - day + 1 + offset * 7);
+    return fmtDate(d);
+  }
+
+  function memberName(id) {
+    var m = state.members.filter(function (x) { return x.id === id; })[0];
+    return m ? m.name : '已离开的室友';
+  }
+
+  /* ---------- 结算算法 ---------- */
+
+  function calcBalances() {
+    var bal = {};
+    state.members.forEach(function (m) { bal[m.id] = 0; });
+
+    state.expenses.forEach(function (e) {
+      if (e.settled) return;
+      var ids = (e.splitAmong || []).filter(function (id) {
+        return state.members.some(function (m) { return m.id === id; });
+      });
+      if (!ids.length) return;
+      if (bal[e.paidBy] === undefined) return;
+
+      var amount = Number(e.amount) || 0;
+      var share = amount / ids.length;
+      bal[e.paidBy] += amount;
+      ids.forEach(function (id) { bal[id] -= share; });
+    });
+
+    Object.keys(bal).forEach(function (k) {
+      if (Math.abs(bal[k]) < 0.005) bal[k] = 0;
+    });
+    return bal;
+  }
+
+  function simplifyDebts(bal) {
+    var creditors = [];
+    var debtors = [];
+
+    Object.keys(bal).forEach(function (id) {
+      var v = bal[id];
+      if (v > 0.005) creditors.push({ id: id, amount: v });
+      else if (v < -0.005) debtors.push({ id: id, amount: -v });
+    });
+
+    creditors.sort(function (a, b) { return b.amount - a.amount; });
+    debtors.sort(function (a, b) { return b.amount - a.amount; });
+
+    var transfers = [];
+    var i = 0, j = 0;
+
+    while (i < creditors.length && j < debtors.length) {
+      var pay = Math.min(creditors[i].amount, debtors[j].amount);
+      if (pay > 0.005) {
+        transfers.push({
+          from: debtors[j].id,
+          to: creditors[i].id,
+          amount: Math.round(pay * 100) / 100
+        });
+      }
+      creditors[i].amount -= pay;
+      debtors[j].amount -= pay;
+      if (creditors[i].amount < 0.005) i++;
+      if (debtors[j].amount < 0.005) j++;
+    }
+    return transfers;
+  }
+
+  /* ---------- 渲染 ---------- */
+
+  function renderHeader() {
+    var wk = weekKey();
+    var undone = state.assignments.filter(function (a) {
+      return a.weekKey === wk && !a.done;
+    }).length;
+
+    return '<header>' +
+      '<div>' +
+        '<div class="title">' + esc(state.household) + '</div>' +
+        '<div class="sub">' + state.members.length + ' 位室友' +
+          (undone ? ' · 本周还有 ' + undone + ' 项值日' : '') + '</div>' +
+      '</div>' +
+      '<button class="btn ghost" style="padding:8px 12px;font-size:13px" data-action="open-settings">设置</button>' +
+    '</header>';
+  }
+
+  function renderNav() {
+    return '<nav>' + TABS.map(function (t) {
+      return '<button class="' + (state.tab === t.id ? 'active' : '') + '" data-action="tab" data-id="' + t.id + '">' +
+        '<span class="icon">' + t.icon + '</span><span>' + t.label + '</span>' +
+      '</button>';
+    }).join('') + '</nav>';
+  }
+
+  function block(title, listHtml, emptyText, tab) {
+    return '<div class="card">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+        '<h3 style="margin:0">' + title + '</h3>' +
+        '<button class="link" data-action="tab" data-id="' + tab + '">查看全部 ›</button>' +
+      '</div>' +
+      (listHtml || '<p class="muted small">' + emptyText + '</p>') +
+    '</div>';
+  }
+
+  function renderHome() {
+    if (state.members.length === 0) {
+      return '<div class="card">' +
+        '<h3>👋 欢迎使用合租生活管家</h3>' +
+        '<p class="muted" style="margin:8px 0 14px">先把室友加进来，就可以开始记账、排值日、登记公共物品、写公约了。</p>' +
+        '<button class="btn block" data-action="open-settings">添加室友</button>' +
+      '</div>';
+    }
+
+    var wk = weekKey();
+    var weekTasks = state.assignments.filter(function (a) { return a.weekKey === wk; });
+    var undone = weekTasks.filter(function (a) { return !a.done; });
+    var unsettled = state.expenses.filter(function (e) { return !e.settled; });
+    var low = state.supplies.filter(function (s) { return s.shared && s.status !== '充足'; });
+    var pending = state.clauses.filter(function (c) {
+      return c.confirmedBy.length < state.members.length;
+    });
+
+    var ratio = weekTasks.length
+      ? Math.round(((weekTasks.length - undone.length) / weekTasks.length) * 100)
+      : 0;
+
+    var choreHtml = undone.length ? '<ul class="list">' + undone.slice(0, 3).map(function (a) {
+      return '<li><span>' + esc(a.taskName) + '</span><span class="muted small">' + esc(memberName(a.memberId)) + '</span></li>';
+    }).join('') + '</ul>' : '';
+
+    var expHtml = unsettled.length ? '<ul class="list">' + unsettled.slice(0, 3).map(function (e) {
+      return '<li><span>' + esc(e.title) + '</span><strong>¥' + Number(e.amount).toFixed(2) + '</strong></li>';
+    }).join('') + '</ul>' : '';
+
+    var supHtml = low.length ? '<ul class="list">' + low.slice(0, 3).map(function (s) {
+      return '<li><span>' + esc(s.name) + '</span><span class="tag ' + (s.status === '耗尽' ? 'red' : 'orange') + '">' + s.status + '</span></li>';
+    }).join('') + '</ul>' : '';
+
+    var clauseHtml = pending.length ? '<ul class="list">' + pending.slice(0, 3).map(function (c) {
+      return '<li><span>' + esc(c.content) + '</span><span class="muted small">' + c.confirmedBy.length + '/' + state.members.length + ' 确认</span></li>';
+    }).join('') + '</ul>' : '';
+
+    return '<div class="card">' +
+        '<h3>本周值日进度</h3>' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-top:10px">' +
+          '<div class="progress" style="flex:1"><i style="width:' + ratio + '%"></i></div>' +
+          '<span class="muted small">' + ratio + '%</span>' +
+        '</div>' +
+        '<p class="muted small" style="margin-top:8px">' +
+          (weekTasks.length === 0
+            ? '本周还没有排班，去「值日」页生成一次。'
+            : '共 ' + weekTasks.length + ' 项，已完成 ' + (weekTasks.length - undone.length) + ' 项。') +
+        '</p>' +
+      '</div>' +
+      block('待完成值日', choreHtml, '本周值日都完成了 🎉', 'chore') +
+      block('未结清费用', expHtml, '账目清爽，没有欠款。', 'expense') +
+      block('需要采购', supHtml, '公共物品都还充足。', 'supply') +
+      block('待确认公约', clauseHtml, '所有条款都已确认。', 'clause');
+  }
+
+  function renderExpense() {
+    if (state.members.length === 0) {
+      return '<div class="card"><p class="muted">先添加室友，才能开始记账。</p>' +
+        '<button class="btn block" style="margin-top:12px" data-action="open-settings">添加室友</button></div>';
+    }
+
+    var options = state.members.map(function (m) {
+      return '<option value="' + m.id + '">' + esc(m.name) + '</option>';
+    }).join('');
+
+    var checks = state.members.map(function (m) {
+      return '<label class="chk"><input type="checkbox" class="split-box" value="' + m.id + '" checked> ' + esc(m.name) + '</label>';
+    }).join('');
+
+    var transfers = simplifyDebts(calcBalances());
+
+    var active = state.expenses.filter(function (e) { return !e.settled; });
+    var done = state.expenses.filter(function (e) { return e.settled; });
+    var ordered = active.concat(done);
+
+    return '<div class="card">' +
+        '<h3>记一笔</h3>' +
+        '<div class="row"><input class="input" id="exp-title" placeholder="费用名称，例如 10月水费"></div>' +
+        '<div class="row"><input class="input" id="exp-amount" type="number" step="0.01" min="0" placeholder="金额（元）"></div>' +
+        '<div class="row"><select class="input" id="exp-paid"><option value="">谁付的钱？</option>' + options + '</select></div>' +
+        '<div class="row">' +
+          '<div class="label">谁参与分摊（默认全部）</div>' +
+          '<div class="chks">' + checks + '</div>' +
+        '</div>' +
+        '<button class="btn block" data-action="add-expense">保存这笔费用</button>' +
+      '</div>' +
+
+      '<div class="card">' +
+        '<h3>当前结算</h3>' +
+        (transfers.length === 0
+          ? '<p class="muted small">账目已平，没有待结清的转账。</p>'
+          : '<ul class="list">' + transfers.map(function (t) {
+              return '<li><span>' + esc(memberName(t.from)) + ' → ' + esc(memberName(t.to)) + '</span>' +
+                '<strong>¥' + t.amount.toFixed(2) + '</strong></li>';
+            }).join('') + '</ul>' +
+            '<p class="muted small" style="margin-top:8px">已把所有未结清费用合并，这是最少的转账笔数。</p>') +
+      '</div>' +
+
+      '<div class="card">' +
+        '<h3>费用记录</h3>' +
+        (ordered.length === 0
+          ? '<p class="muted small">还没有记录。记下第一笔，账目就有据可查了。</p>'
+          : '<ul class="list">' + ordered.map(function (e) {
+              return '<li>' +
+                '<div style="min-width:0">' +
+                  '<div>' + esc(e.title) + '</div>' +
+                  '<div class="muted small">' + esc(memberName(e.paidBy)) + ' 垫付 · ' +
+                    e.splitAmong.length + ' 人分摊' + (e.settled ? ' · 已结清' : '') + '</div>' +
+                '</div>' +
+                '<div class="right">' +
+                  '<strong>¥' + Number(e.amount).toFixed(2) + '</strong>' +
+                  '<div class="actions">' +
+                    (e.settled ? '' : '<button class="link" data-action="settle-expense" data-id="' + e.id + '">结清</button>') +
+                    '<button class="link danger" data-action="del-expense" data-id="' + e.id + '">删除</button>' +
+                  '</div>' +
+                '</div>' +
+              '</li>';
+            }).join('') + '</ul>') +
+      '</div>';
+  }
+
+  function renderChore() {
+    if (state.members.length === 0) {
+      return '<div class="card"><p class="muted">先添加室友，再排值日。</p>' +
+        '<button class="btn block" style="margin-top:12px" data-action="open-settings">添加室友</button></div>';
+    }
+
+    var wk = weekKey();
+    var list = state.assignments.filter(function (a) { return a.weekKey === wk; });
+    var remaining = list.filter(function (a) { return !a.done; });
+    var finished = list.filter(function (a) { return a.done; });
+
+    var load = {};
+    state.members.forEach(function (m) { load[m.id] = 0; });
+    list.forEach(function (a) {
+      if (load[a.memberId] !== undefined) load[a.memberId] += (a.minutes || 0);
+    });
+
+    return '<div class="card">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center">' +
+          '<h3 style="margin:0">本周值日</h3>' +
+          '<button class="btn ghost" style="padding:7px 12px;font-size:13px" data-action="auto-schedule">自动排班</button>' +
+        '</div>' +
+        (list.length === 0
+          ? '<p class="muted small" style="margin-top:10px">本周还没有安排。点「自动排班」，系统会按任务用时尽量平均地分给每个人。</p>'
+          : '<ul class="list" style="margin-top:8px">' +
+              remaining.concat(finished).map(function (a) {
+                return '<li>' +
+                  '<div style="min-width:0">' +
+                    '<div style="' + (a.done ? 'text-decoration:line-through;color:#8a919f' : '') + '">' + esc(a.taskName) + '</div>' +
+                    '<div class="muted small">' + esc(memberName(a.memberId)) + ' · 约 ' + a.minutes + ' 分钟</div>' +
+                  '</div>' +
+                  '<div class="actions">' +
+                    (a.done
+                      ? '<span class="tag green">已完成</span>'
+                      : '<button class="link" data-action="done-chore" data-id="' + a.id + '">完成</button>') +
+                    '<button class="link danger" data-action="del-chore" data-id="' + a.id + '">删除</button>' +
+                  '</div>' +
+                '</li>';
+              }).join('') +
+            '</ul>') +
+      '</div>' +
+
+      '<div class="card">' +
+        '<h3>本周负荷</h3>' +
+        '<ul class="list">' + state.members.map(function (m) {
+          return '<li><span>' + esc(m.name) + '</span><span class="muted small">' + (load[m.id] || 0) + ' 分钟</span></li>';
+        }).join('') + '</ul>' +
+        '<p class="muted small" style="margin-top:8px">公平不是项数相同，而是用时接近。</p>' +
+      '</div>' +
+
+      '<div class="card">' +
+        '<h3>清洁任务库</h3>' +
+        '<div class="row" style="display:flex;gap:8px;margin-top:8px">' +
+          '<input class="input" id="chore-name" placeholder="任务，如 拖地">' +
+          '<input class="input" id="chore-min" type="number" min="1" placeholder="分钟" style="width:88px;flex:none">' +
+        '</div>' +
+        '<button class="btn block" data-action="add-chore-task">添加任务</button>' +
+        '<ul class="list" style="margin-top:10px">' +
+          (state.chores.length === 0
+            ? '<li class="muted small">还没有任务。先加上扫地、拖地、倒垃圾这几项。</li>'
+            : state.chores.map(function (t) {
+                return '<li><span>' + esc(t.name) + '</span>' +
+                  '<span style="display:flex;gap:6px;align-items:center">' +
+                    '<span class="muted small">' + t.minutes + ' 分钟</span>' +
+                    '<button class="link danger" data-action="del-chore-task" data-id="' + t.id + '">删除</button>' +
+                  '</span></li>';
+              }).join('')) +
+        '</ul>' +
+      '</div>';
+  }
+
+  function renderSupply() {
+    var shared = state.supplies.filter(function (s) { return s.shared; });
+    var personal = state.supplies.filter(function (s) { return !s.shared; });
+
+    function row(s) {
+      var cls = s.status === '充足' ? 'green' : (s.status === '偏低' ? 'orange' : 'red');
+      return '<li>' +
+        '<div style="min-width:0">' +
+          '<div>' + esc(s.name) + '</div>' +
+          '<div class="muted small">' + (s.shared ? '公共物品' : '个人物品') + '</div>' +
+        '</div>' +
+        '<div class="right">' +
+          '<span class="tag ' + cls + '">' + s.status + '</span>' +
+          '<div class="actions">' +
+            '<button class="link" data-action="cycle-supply" data-id="' + s.id + '">切换状态</button>' +
+            '<button class="link danger" data-action="del-supply" data-id="' + s.id + '">删除</button>' +
+          '</div>' +
+        '</div>' +
+      '</li>';
+    }
+
+    return '<div class="card">' +
+        '<h3>登记物品</h3>' +
+        '<div class="row"><input class="input" id="sup-name" placeholder="物品名称，如 抽纸"></div>' +
+        '<div class="row">' +
+          '<select class="input" id="sup-shared">' +
+            '<option value="1">公共物品（大家一起用）</option>' +
+            '<option value="0">个人物品（自己的）</option>' +
+          '</select>' +
+        '</div>' +
+        '<button class="btn block" data-action="add-supply">登记</button>' +
+        '<p class="muted small" style="margin-top:8px">把「公共」和「个人」分清楚，能省掉一大半扯皮。</p>' +
+      '</div>' +
+
+      '<div class="card">' +
+        '<h3>公共物品</h3>' +
+        (shared.length === 0
+          ? '<p class="muted small">还没有公共物品。先登记抽纸、垃圾袋、洗洁精这类高频消耗品。</p>'
+          : '<ul class="list">' + shared.map(row).join('') + '</ul>') +
+      '</div>' +
+
+      (personal.length
+        ? '<div class="card"><h3>个人物品</h3><ul class="list">' + personal.map(row).join('') + '</ul></div>'
+        : '');
+  }
+
+  function renderClause() {
+    var options = CATEGORIES.map(function (c) {
+      return '<option>' + c + '</option>';
+    }).join('');
+
+    return '<div class="card">' +
+        '<h3>新增条款</h3>' +
+        '<div class="row"><select class="input" id="clause-cat">' + options + '</select></div>' +
+        '<div class="row"><textarea class="input" id="clause-content" rows="2" placeholder="例如：晚上 11 点后不在公共区域外放声音"></textarea></div>' +
+        '<button class="btn block" data-action="add-clause">添加条款</button>' +
+      '</div>' +
+
+      (state.clauses.length === 0
+        ? '<div class="card"><p class="muted small">还没有公约。把最容易吵架的几件事先写下来，比事后争论有用得多。</p></div>'
+        : state.clauses.map(function (c) {
+            return '<div class="card">' +
+              '<div style="display:flex;justify-content:space-between;gap:10px">' +
+                '<span class="tag">' + esc(c.category) + '</span>' +
+                '<span class="muted small">v' + c.version + '</span>' +
+              '</div>' +
+              '<p style="margin:10px 0">' + esc(c.content) + '</p>' +
+              '<div class="label">谁已确认（点名字切换）</div>' +
+              '<div class="chks" style="margin-bottom:10px">' +
+                (state.members.map(function (m) {
+                  return '<button class="chip ' + (c.confirmedBy.indexOf(m.id) >= 0 ? 'on' : '') + '" ' +
+                    'data-action="toggle-confirm" data-id="' + c.id + '" data-mid="' + m.id + '">' +
+                    esc(m.name) + '</button>';
+                }).join('') || '<span class="muted small">还没有室友</span>') +
+              '</div>' +
+              '<div class="actions" style="justify-content:flex-start">' +
+                '<button class="link" data-action="edit-clause" data-id="' + c.id + '">修改内容</button>' +
+                '<button class="link danger" data-action="del-clause" data-id="' + c.id + '">删除</button>' +
+              '</div>' +
+            '</div>';
+          }).join(''));
+  }
+
+  function renderSettings() {
+    return '<div class="overlay" data-action="close-settings">' +
+      '<div class="sheet" data-action="noop">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">' +
+          '<h3 style="margin:0;font-size:16px">设置</h3>' +
+          '<button class="link" data-action="close-settings">关闭</button>' +
+        '</div>' +
+
+        '<div class="card">' +
+          '<h3>合租空间名称</h3>' +
+          '<div class="row" style="display:flex;gap:8px">' +
+            '<input class="input" id="house-name" value="' + esc(state.household) + '">' +
+            '<button class="btn" style="flex:none;padding:10px 14px" data-action="save-house">保存</button>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="card">' +
+          '<h3>室友（' + state.members.length + '）</h3>' +
+          '<div class="row" style="display:flex;gap:8px;margin-top:8px">' +
+            '<input class="input" id="member-name" placeholder="室友昵称">' +
+            '<button class="btn" style="flex:none;padding:10px 14px" data-action="add-member">添加</button>' +
+          '</div>' +
+          '<ul class="list">' +
+            (state.members.map(function (m) {
+              return '<li><span>' + esc(m.name) + '</span>' +
+                '<div class="actions">' +
+                  '<button class="link" data-action="rename-member" data-id="' + m.id + '">改名</button>' +
+                  '<button class="link danger" data-action="del-member" data-id="' + m.id + '">移除</button>' +
+                '</div></li>';
+            }).join('') || '<li class="muted small">还没有室友。</li>') +
+          '</ul>' +
+        '</div>' +
+
+        '<div class="card">' +
+          '<h3>数据</h3>' +
+          '<p class="muted small" style="margin-bottom:10px">数据保存在当前浏览器本地。换设备或换浏览器时，用「导出备份」保存文件，再用「导入备份」恢复。</p>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+            '<button class="btn ghost" data-action="export-data">导出备份</button>' +
+            '<button class="btn ghost" data-action="import-data">导入备份</button>' +
+            '<button class="btn ghost-danger" data-action="reset-data">清空全部数据</button>' +
+          '</div>' +
+          '<input type="file" id="import-file" accept="application/json" style="display:none">' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function render() {
+    var sheet = document.querySelector('.sheet');
+    var scrollTop = sheet ? sheet.scrollTop : 0;
+
+    var body;
+    switch (state.tab) {
+      case 'expense': body = renderExpense(); break;
+      case 'chore': body = renderChore(); break;
+      case 'supply': body = renderSupply(); break;
+      case 'clause': body = renderClause(); break;
+      default: body = renderHome();
+    }
+
+    document.getElementById('app').innerHTML =
+      renderHeader() +
+      '<main>' + body + '</main>' +
+      renderNav() +
+      (showSettings ? renderSettings() : '');
+
+    if (showSettings) {
+      var s = document.querySelector('.sheet');
+      if (s) s.scrollTop = scrollTop;
+    }
+  }
+
+  /* ---------- 业务操作 ---------- */
+
+  function autoSchedule() {
+    if (state.members.length === 0) { alert('先添加室友'); return; }
+    if (state.chores.length === 0) { alert('先在下方「清洁任务库」添加任务'); return; }
+
+    var wk = weekKey();
+    var prevWk = weekKey(-1);
+
+    // 保留本周已完成的，未完成的重排
+    state.assignments = state.assignments.filter(function (a) {
+      return a.weekKey !== wk || a.done;
+    });
+
+    var load = {};
+    state.members.forEach(function (m) { load[m.id] = 0; });
+
+    // 上周负荷作为起点，让本周倾向分给上周干得少的人
+    state.assignments.filter(function (a) { return a.weekKey === prevWk; }).forEach(function (a) {
+      if (load[a.memberId] !== undefined) load[a.memberId] += (a.minutes || 0);
+    });
+    state.assignments.filter(function (a) { return a.weekKey === wk; }).forEach(function (a) {
+      if (load[a.memberId] !== undefined) load[a.memberId] += (a.minutes || 0);
+    });
+
+    // 用时长的任务先分给当前负荷最小的人
+    state.chores.slice().sort(function (a, b) { return b.minutes - a.minutes; }).forEach(function (task) {
+      var best = state.members[0];
+      state.members.forEach(function (m) {
+        if (load[m.id] < load[best.id]) best = m;
+      });
+      load[best.id] += task.minutes;
+      state.assignments.push({
+        id: uid(),
+        taskId: task.id,
+        taskName: task.name,
+        minutes: task.minutes,
+        memberId: best.id,
+        weekKey: wk,
+        done: false
+      });
+    });
+
+    save();
+    render();
+  }
+
+  function handleAction(action, el) {
+    var id = el.dataset.id;
+
+    switch (action) {
+      case 'noop':
+        return;
+
+      case 'close-settings':
+        showSettings = false; render(); return;
+
+      case 'open-settings':
+        showSettings = true; render(); return;
+
+      case 'tab':
+        state.tab = id; save(); render(); return;
+
+      case 'save-house': {
+        var hn = document.getElementById('house-name').value.trim();
+        if (hn) { state.household = hn; save(); render(); }
+        return;
+      }
+
+      case 'add-member': {
+        var input = document.getElementById('member-name');
+        var name = input.value.trim();
+        if (!name) return;
+        if (state.members.some(function (m) { return m.name === name; })) {
+          alert('已有同名室友'); return;
+        }
+        state.members.push({ id: uid(), name: name });
+        save(); render();
+        return;
+      }
+
+      case 'rename-member': {
+        var m1 = state.members.filter(function (x) { return x.id === id; })[0];
+        if (!m1) return;
+        var nn = prompt('新的昵称', m1.name);
+        if (nn && nn.trim()) { m1.name = nn.trim(); save(); render(); }
+        return;
+      }
+
+      case 'del-member': {
+        var m2 = state.members.filter(function (x) { return x.id === id; })[0];
+        if (!m2) return;
+        if (!confirm('确定移除「' + m2.name + '」？\nTA 垫付的费用会一并删除，其他费用里也会把 TA 移出分摊。')) return;
+        state.members = state.members.filter(function (x) { return x.id !== id; });
+        state.expenses = state.expenses.filter(function (e) { return e.paidBy !== id; });
+        state.expenses.forEach(function (e) {
+          e.splitAmong = (e.splitAmong || []).filter(function (x) { return x !== id; });
+        });
+        state.expenses = state.expenses.filter(function (e) { return e.splitAmong.length > 0; });
+        state.assignments = state.assignments.filter(function (a) { return a.memberId !== id; });
+        state.clauses.forEach(function (c) {
+          c.confirmedBy = (c.confirmedBy || []).filter(function (x) { return x !== id; });
+        });
+        save(); render();
+        return;
+      }
+
+      case 'add-expense': {
+        var title = document.getElementById('exp-title').value.trim();
+        var amount = parseFloat(document.getElementById('exp-amount').value);
+        var paidBy = document.getElementById('exp-paid').value;
+        var splitAmong = Array.prototype.slice.call(
+          document.querySelectorAll('.split-box:checked')
+        ).map(function (x) { return x.value; });
+
+        if (!title) { alert('请填写费用名称'); return; }
+        if (!(amount > 0)) { alert('请填写正确的金额'); return; }
+        if (!paidBy) { alert('请选择谁付的钱'); return; }
+        if (splitAmong.length === 0) { alert('至少选择一位分摊人'); return; }
+
+        state.expenses.unshift({
+          id: uid(),
+          title: title,
+          amount: Math.round(amount * 100) / 100,
+          paidBy: paidBy,
+          splitAmong: splitAmong,
+          settled: false,
+          createdAt: Date.now()
+        });
+        save(); render();
+        return;
+      }
+
+      case 'settle-expense': {
+        var e1 = state.expenses.filter(function (x) { return x.id === id; })[0];
+        if (e1) { e1.settled = true; save(); render(); }
+        return;
+      }
+
+      case 'del-expense': {
+        if (!confirm('删除这条费用记录？')) return;
+        state.expenses = state.expenses.filter(function (x) { return x.id !== id; });
+        save(); render();
+        return;
+      }
+
+      case 'add-chore-task': {
+        var cname = document.getElementById('chore-name').value.trim();
+        var cmin = parseInt(document.getElementById('chore-min').value, 10);
+        if (!cname) { alert('请填写任务名称'); return; }
+        if (!(cmin > 0)) { alert('请填写预计用时（分钟）'); return; }
+        state.chores.push({ id: uid(), name: cname, minutes: cmin });
+        save(); render();
+        return;
+      }
+
+      case 'del-chore-task': {
+        state.chores = state.chores.filter(function (x) { return x.id !== id; });
+        save(); render();
+        return;
+      }
+
+      case 'auto-schedule':
+        autoSchedule();
+        return;
+
+      case 'done-chore': {
+        var a1 = state.assignments.filter(function (x) { return x.id === id; })[0];
+        if (a1) { a1.done = true; a1.doneAt = Date.now(); save(); render(); }
+        return;
+      }
+
+      case 'del-chore': {
+        state.assignments = state.assignments.filter(function (x) { return x.id !== id; });
+        save(); render();
+        return;
+      }
+
+      case 'add-supply': {
+        var sname = document.getElementById('sup-name').value.trim();
+        var shared = document.getElementById('sup-shared').value === '1';
+        if (!sname) { alert('请填写物品名称'); return; }
+        state.supplies.push({ id: uid(), name: sname, shared: shared, status: '充足' });
+        save(); render();
+        return;
+      }
+
+      case 'cycle-supply': {
+        var s1 = state.supplies.filter(function (x) { return x.id === id; })[0];
+        if (!s1) return;
+        var order = ['充足', '偏低', '耗尽'];
+        s1.status = order[(order.indexOf(s1.status) + 1) % order.length];
+        save(); render();
+        return;
+      }
+
+      case 'del-supply': {
+        state.supplies = state.supplies.filter(function (x) { return x.id !== id; });
+        save(); render();
+        return;
+      }
+
+      case 'add-clause': {
+        var cat = document.getElementById('clause-cat').value;
+        var content = document.getElementById('clause-content').value.trim();
+        if (!content) { alert('请填写条款内容'); return; }
+        state.clauses.push({
+          id: uid(),
+          category: cat,
+          content: content,
+          version: 1,
+          confirmedBy: [],
+          updatedAt: Date.now()
+        });
+        save(); render();
+        return;
+      }
+
+      case 'toggle-confirm': {
+        var c1 = state.clauses.filter(function (x) { return x.id === id; })[0];
+        var mid = el.dataset.mid;
+        if (!c1) return;
+        c1.confirmedBy = c1.confirmedBy || [];
+        if (c1.confirmedBy.indexOf(mid) >= 0) {
+          c1.confirmedBy = c1.confirmedBy.filter(function (x) { return x !== mid; });
+        } else {
+          c1.confirmedBy.push(mid);
+        }
+        save(); render();
+        return;
+      }
+
+      case 'edit-clause': {
+        var c2 = state.clauses.filter(function (x) { return x.id === id; })[0];
+        if (!c2) return;
+        var nv = prompt('修改条款内容（版本号 +1，确认记录会清空）', c2.content);
+        if (nv && nv.trim() && nv.trim() !== c2.content) {
+          c2.content = nv.trim();
+          c2.version += 1;
+          c2.confirmedBy = [];
+          c2.updatedAt = Date.now();
+          save(); render();
+        }
+        return;
+      }
+
+      case 'del-clause': {
+        if (!confirm('删除这条公约？')) return;
+        state.clauses = state.clauses.filter(function (x) { return x.id !== id; });
+        save(); render();
+        return;
+      }
+
+      case 'export-data': {
+        var blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = '合租数据-' + fmtDate(new Date()) + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        return;
+      }
+
+      case 'import-data': {
+        var fi = document.getElementById('import-file');
+        if (fi) fi.click();
+        return;
+      }
+
+      case 'reset-data': {
+        if (!confirm('清空所有数据？此操作不可恢复，建议先导出备份。')) return;
+        state = defaultState();
+        save(); render();
+        return;
+      }
+    }
+  }
+
+  /* ---------- 初始化 ---------- */
+
+  function init() {
+    var app = document.getElementById('app');
+
+    app.addEventListener('click', function (e) {
+      var el = e.target.closest('[data-action]');
+      if (!el) return;
+      handleAction(el.dataset.action, el);
+    });
+
+    app.addEventListener('change', function (e) {
+      if (e.target.id !== 'import-file') return;
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      var reader = new FileReader();
+      reader.onload = function () {
+        try {
+          var data = JSON.parse(reader.result);
+          if (!data || typeof data !== 'object' || !Array.isArray(data.members)) {
+            throw new Error('format');
+          }
+          var base = defaultState();
+          Object.keys(data).forEach(function (k) {
+            if (data[k] !== undefined) base[k] = data[k];
+          });
+          base.tab = 'home';
+          state = base;
+          save(); render();
+          alert('导入成功');
+        } catch (err) {
+          alert('导入失败：文件格式不正确');
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    render();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
